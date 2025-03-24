@@ -34,7 +34,6 @@ bar_ax = fig.add_axes([0.1, 0.2, 0.8, 0.4])     # Bar Chart (Bottom)
 
 # Adjusted textbox position to avoid overlap
 textbox_ax = fig.add_axes([0.45, 0.88, 0.085, 0.03])
-# textbox_ax = fig.add_axes([0.35, 0.88, textbox_width, textbox_height])  
 textbox = TextBox(textbox_ax, "Processes:", initial="5")
 
 # Default process limit
@@ -91,24 +90,6 @@ def display_process_table(processes):
 
     # Adjust title position dynamically
     adjust_table_title()
-
-# def display_process_table(processes):
-#     """Display process table with smaller column width."""
-#     table_ax.clear()
-#     table_ax.axis('off')
-#     # table_ax.set_title('Top Processes', fontsize=14, weight='bold')
-
-#     cell_text = [[p.info['pid'], p.info['name'][:10], f"{p.info['cpu_percent']:.2f}", f"{p.info['memory_percent']:.2f}"] for p in processes]
-#     table = table_ax.table(
-#         cellText=cell_text,
-#         colLabels=['PID', 'Name', 'CPU (%)', 'Mem (%)'],
-#         loc='center',
-#         cellLoc='center',
-#         colColours=['#DDDDDD'] * 4
-#     )
-#     table.auto_set_font_size(False)
-#     table.set_fontsize(9)
-#     table.scale(0.7, 1.2)
 
 def plot_bar_chart(processes):
     """Render a bar chart and fix label visibility."""
