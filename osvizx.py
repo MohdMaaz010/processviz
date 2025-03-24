@@ -65,13 +65,17 @@ def get_top_processes():
         key=lambda p: p.info['cpu_percent'],
         reverse=True
     )[:process_limit]
+def adjust_table_title():
+    """Adjust the title position dynamically above the table."""
+    table_ax.set_title('Top Processes', fontsize=14, weight='bold', 
+                       pad=(table_ax.get_position().bounds[3] * 100+20))
 
 def display_process_table(processes):
-    """Display process table with smaller column width."""
+    """Display process table and dynamically adjust title position."""
     table_ax.clear()
     table_ax.axis('off')
-    table_ax.set_title('Top Processes', fontsize=14, weight='bold')
-    
+    #     table_ax.set_title('Top Processes', fontsize=14, weight='bold', pad=10)  # Increase padding
+
     cell_text = [[p.info['pid'], p.info['name'][:10], f"{p.info['cpu_percent']:.2f}", f"{p.info['memory_percent']:.2f}"] for p in processes]
     table = table_ax.table(
         cellText=cell_text,
@@ -80,9 +84,31 @@ def display_process_table(processes):
         cellLoc='center',
         colColours=['#DDDDDD'] * 4
     )
+    
     table.auto_set_font_size(False)
     table.set_fontsize(9)
     table.scale(0.7, 1.2)
+
+    # Adjust title position dynamically
+    adjust_table_title()
+
+# def display_process_table(processes):
+#     """Display process table with smaller column width."""
+#     table_ax.clear()
+#     table_ax.axis('off')
+#     # table_ax.set_title('Top Processes', fontsize=14, weight='bold')
+
+#     cell_text = [[p.info['pid'], p.info['name'][:10], f"{p.info['cpu_percent']:.2f}", f"{p.info['memory_percent']:.2f}"] for p in processes]
+#     table = table_ax.table(
+#         cellText=cell_text,
+#         colLabels=['PID', 'Name', 'CPU (%)', 'Mem (%)'],
+#         loc='center',
+#         cellLoc='center',
+#         colColours=['#DDDDDD'] * 4
+#     )
+#     table.auto_set_font_size(False)
+#     table.set_fontsize(9)
+#     table.scale(0.7, 1.2)
 
 def plot_bar_chart(processes):
     """Render a bar chart and fix label visibility."""
