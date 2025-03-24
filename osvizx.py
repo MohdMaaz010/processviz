@@ -18,7 +18,7 @@ for package in ['psutil', 'matplotlib']:
     install_package(package)
 
 # Initialize figure and axes for custom layout
-fig = plt.figure(figsize=(14, 14))
+fig = plt.figure(figsize=(14, 14))  # This is roughly 35.56 cm x 35.56 cm
 fig.suptitle('Real-Time Task Manager Simulation', fontsize=18, weight='bold')
 
 # Define subplot positions
@@ -27,8 +27,14 @@ pie_ax = fig.add_axes([0.55, 0.7, 0.3, 0.25])   # Pie Chart (Top-Right)
 legend_ax = fig.add_axes([0.87, 0.7, 0.1, 0.25])  # Legend Box (Right of Pie Chart)
 bar_ax = fig.add_axes([0.1, 0.2, 0.8, 0.4])     # Bar Chart (Bottom)
 
-# Move the textbox to the upper side where there is empty space
-textbox_ax = fig.add_axes([0.4, 0.9, 0.2, 0.05])  # Adjusted position
+# Convert 3cm x 1cm to figure coordinates
+# fig_width, fig_height = fig.get_size_inches()
+# textbox_width = (3 / 2.54) / fig_width
+# textbox_height = (1 / 2.54) / fig_height
+
+# Adjusted textbox position to avoid overlap
+textbox_ax = fig.add_axes([0.45, 0.88, 0.085, 0.03])
+# textbox_ax = fig.add_axes([0.35, 0.88, textbox_width, textbox_height])  
 textbox = TextBox(textbox_ax, "Processes:", initial="5")
 
 # Default process limit
@@ -50,7 +56,6 @@ def update_process_limit(text):
         print("Invalid input. Enter a number between 2 and 10.")
         textbox.set_val(str(process_limit))
 
-# Attach the function to the text box
 textbox.on_submit(update_process_limit)
 
 def get_top_processes():
