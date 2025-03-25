@@ -27,11 +27,6 @@ pie_ax = fig.add_axes([0.55, 0.7, 0.3, 0.25])   # Pie Chart (Top-Right)
 legend_ax = fig.add_axes([0.87, 0.7, 0.1, 0.25])  # Legend Box (Right of Pie Chart)
 bar_ax = fig.add_axes([0.1, 0.2, 0.8, 0.4])     # Bar Chart (Bottom)
 
-# Convert 3cm x 1cm to figure coordinates
-# fig_width, fig_height = fig.get_size_inches()
-# textbox_width = (3 / 2.54) / fig_width
-# textbox_height = (1 / 2.54) / fig_height
-
 # Adjusted textbox position to avoid overlap
 
 textbox_ax = fig.add_axes([0.45, 0.88, 0.085, 0.03])
@@ -62,7 +57,8 @@ def get_top_processes():
     """Fetch top processes sorted by CPU usage."""
    return sorted(
         psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
-        key=lambda p: p.info['cpu_percent'],
+        key=lambda p: p.info['cpu_percent'] or 0,  # Handle None values
+
         reverse=True   
     )[:process_limit]
 
