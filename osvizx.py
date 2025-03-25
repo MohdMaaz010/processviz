@@ -18,7 +18,7 @@ for package in ['psutil', 'matplotlib']:
     install_package(package)
 
 # Initialize figure and axes for custom layout
-fig = plt.figure(figsize=(14, 14))  # This is roughly 35.56 cm x 35.56 cm
+fig = plt.figure(figsize=(14, 14))
 fig.suptitle('Real-Time Task Manager Simulation', fontsize=18, weight='bold')
 
 # Define subplot positions
@@ -27,51 +27,45 @@ pie_ax = fig.add_axes([0.55, 0.7, 0.3, 0.25])   # Pie Chart (Top-Right)
 legend_ax = fig.add_axes([0.87, 0.7, 0.1, 0.25])  # Legend Box (Right of Pie Chart)
 bar_ax = fig.add_axes([0.1, 0.2, 0.8, 0.4])     # Bar Chart (Bottom)
 
-# Adjusted textbox position to avoid overlap
-
-textbox_ax = fig.add_axes([0.45, 0.88, 0.085, 0.03])
+# Adding a text input box to choose the number of processes
+textbox_ax = fig.add_axes([0.8, 0.05, 0.1, 0.05])  # Position for text input
 textbox = TextBox(textbox_ax, "Processes:", initial="5")
 
 # Default process limit
 process_limit = 5
-colors = ['#FF6B6B', '#4D96FF', '#6BCB77', '#FFA36C', '#C47AFF', '#FFD700', '#8A2BE2', '#FF4500', '#20B2AA', '#DC143C']
+colors = ['#FF6B6B', '#4D96FF', '#6BCB77', '#FFA36C', '#C47AFF', '#FFD700']
 
 def update_process_limit(text):
     """Update the process limit based on user input."""
     global process_limit
     try:
         value = int(text)
-        if 2 <= value <= 10:
+        if 2 <= value <= 6:
             process_limit = value
         else:
-            print("Limit must be between 2 and 10. Resetting to default (5).")
+            print("Limit must be between 2 and 6. Resetting to default (5).")
             textbox.set_val("5")
             process_limit = 5
     except ValueError:
-        print("Invalid input. Enter a number between 2 and 10.")
+        print("Invalid input. Enter a number between 2 and 6.")
         textbox.set_val(str(process_limit))
 
+# Attach the function to the text box
 textbox.on_submit(update_process_limit)
 
 def get_top_processes():
     """Fetch top processes sorted by CPU usage."""
-   return sorted(
+    return sorted(
         psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
-        key=lambda p: p.info['cpu_percent'] or 0,  # Handle None values
-
-        reverse=True   
+        key=lambda p: p.info['cpu_percent'],
+        reverse=True
     )[:process_limit]
 
-def adjust_table_title():
-    """Adjust the title position dynamically above the table."""
-    table_ax.set_title('Top Processes', fontsize=14, weight='bold', 
-                       pad=(table_ax.get_position().bounds[3] * 100+20))
-
 def display_process_table(processes):
-    """Display process table and dynamically adjust title position."""
+    """Display process table with smaller column width and RAM usage."""
     table_ax.clear()
     table_ax.axis('off')
-    #     table_ax.set_title('Top Processes', fontsize=14, weight='bold', pad=10)  # Increase padding
+    table_ax.set_title('Top Processes', fontsize=14, weight='bold')
 
     cell_text = [[p.info['pid'], p.info['name'][:10], f"{p.info['cpu_percent']:.2f}", f"{p.info['memory_percent']:.2f}"] for p in processes]
     table = table_ax.table(
@@ -81,13 +75,15 @@ def display_process_table(processes):
         cellLoc='center',
         colColours=['#DDDDDD'] * 4
     )
-    
     table.auto_set_font_size(False)
     table.set_fontsize(9)
     table.scale(0.7, 1.2)
 
-    # Adjust title position dynamically
-    adjust_table_title()
+    # Display Total RAM Usage below the table
+    ram_usage = psutil.virtual_memory().percent  # Get total RAM usage
+    table_ax.text(0.5, -0.3, f"Total RAM Usage: {ram_usage:.2f}%", 
+                  ha='center', fontsize=12, color='red', transform=table_ax.transAxes)
+
 
 def plot_bar_chart(processes):
     """Render a bar chart and fix label visibility."""
