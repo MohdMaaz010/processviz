@@ -33,6 +33,7 @@ bar_ax = fig.add_axes([0.1, 0.2, 0.8, 0.4])     # Bar Chart (Bottom)
 # textbox_height = (1 / 2.54) / fig_height
 
 # Adjusted textbox position to avoid overlap
+
 textbox_ax = fig.add_axes([0.45, 0.88, 0.085, 0.03])
 textbox = TextBox(textbox_ax, "Processes:", initial="5")
 
@@ -59,11 +60,12 @@ textbox.on_submit(update_process_limit)
 
 def get_top_processes():
     """Fetch top processes sorted by CPU usage."""
-    return sorted(
-        psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
-        key=lambda p: p.info['cpu_percent'],
-        reverse=True
-    )[:process_limit]
+   return [p for p in sorted(
+    psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
+    key=lambda p: p.info['cpu_percent'] or 0,
+    reverse=True
+)[:process_limit] if p.info['cpu_percent'] > 0]  # Remove idle processes
+
 def adjust_table_title():
     """Adjust the title position dynamically above the table."""
     table_ax.set_title('Top Processes', fontsize=14, weight='bold', 
