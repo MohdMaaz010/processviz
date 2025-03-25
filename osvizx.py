@@ -61,6 +61,16 @@ def get_top_processes():
         reverse=True
     )[:process_limit]
 
+def update(frame):
+    """Update function called by FuncAnimation."""
+    top_processes = get_top_processes()  # Get updated process list
+    if not top_processes:
+        return  # Safety check in case no processes are returned
+
+    display_process_table(top_processes)  # Update process table
+    plot_bar_chart(top_processes)  # Update bar chart
+    plot_pie_chart(top_processes)  # Update pie chart
+
 def display_process_table(processes):
     """Display process table with smaller column width and RAM usage."""
     table_ax.clear()
@@ -78,12 +88,10 @@ def display_process_table(processes):
     table.auto_set_font_size(False)
     table.set_fontsize(9)
     table.scale(0.7, 1.2)
-
+    
     # Display Total RAM Usage below the table
-    ram_usage = psutil.virtual_memory().percent  # Get total RAM usage
-    table_ax.text(0.5, -0.3, f"Total RAM Usage: {ram_usage:.2f}%", 
-                  ha='center', fontsize=12, color='red', transform=table_ax.transAxes)
-
+    ram_usage = psutil.virtual_memory().percent
+    table_ax.text(0.5, -0.3, f"Total RAM Usage: {ram_usage:.2f}%", ha='center', fontsize=12, color='red', transform=table_ax.transAxes)
 
 def plot_bar_chart(processes):
     """Render a bar chart and fix label visibility."""
@@ -100,17 +108,16 @@ def plot_bar_chart(processes):
     bar_ax.set_xticklabels(names, rotation=0, ha='center', fontsize=10)
 
     for bar, usage in zip(bars, cpu_usages):
-        bar_ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2, f"{usage:.1f}%", 
-                    ha='center', va='bottom', fontsize=9, weight='bold')
+        bar_ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2, f"{usage:.1f}%", ha='center', va='bottom', fontsize=9, weight='bold')
 
 def plot_pie_chart(processes):
     """Render the pie chart with a separate legend."""
     pie_ax.clear()
     pie_ax.text(-1.5, 1, 'CPU Usage Distribution', fontsize=14, weight='bold', ha='center', va='center')
-
+    
     names = [p.info['name'] for p in processes]
     cpu_usages = [max(p.info['cpu_percent'], 0.1) for p in processes]
-
+    
     wedges, _ = pie_ax.pie(
         cpu_usages,
         colors=colors[:len(processes)],
@@ -118,14 +125,11 @@ def plot_pie_chart(processes):
         wedgeprops={'linewidth': 1, 'edgecolor': 'white'}
     )
 
-    # Add a central white circle for a donut effect
     centre_circle = plt.Circle((0, 0), 0.65, fc='white')
     pie_ax.add_artist(centre_circle)
-
-    # Update the legend separately
+    
     legend_ax.clear()
     legend_ax.axis('off')
-
     legend_text = [[p.info['name'], f"{p.info['cpu_percent']:.1f}%"] for p in processes]
     legend_table = legend_ax.table(
         cellText=legend_text,
@@ -138,15 +142,6 @@ def plot_pie_chart(processes):
     legend_table.set_fontsize(9)
     legend_table.scale(0.9, 1.2)
 
-def update(frame):
-    """Update function called by FuncAnimation."""
-    top_processes = get_top_processes()  # Get updated process list
-    if not top_processes:  # Safety check in case no processes are returned
-        return
-    
-    display_process_table(top_processes)  # Update process table
-    plot_bar_chart(top_processes)  # Update bar chart
-    plot_pie_chart(top_processes)  # Update pie chart
 # Start animation
 animation = FuncAnimation(fig, update, interval=1000)
 plt.show()
