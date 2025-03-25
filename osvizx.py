@@ -61,10 +61,10 @@ textbox.on_submit(update_process_limit)
 def get_top_processes():
     """Fetch top processes sorted by CPU usage."""
    return sorted(
-    psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
-    key=lambda p: p.info['cpu_percent'],
-    reverse=True
-)[:process_limit]
+        psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
+        key=lambda p: p.info['cpu_percent'],
+        reverse=True   
+    )[:process_limit]
 
 def adjust_table_title():
     """Adjust the title position dynamically above the table."""
