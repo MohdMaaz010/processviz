@@ -40,14 +40,14 @@ def update_process_limit(text):
     global process_limit
     try:
         value = int(text)
-        if 2 <= value <= 6:
+        if 2 <= value <= 10:
             process_limit = value
         else:
-            print("Limit must be between 2 and 6. Resetting to default (5).")
+            print("Limit must be between 2 and 10. Resetting to default (5).")
             textbox.set_val("5")
             process_limit = 5
     except ValueError:
-        print("Invalid input. Enter a number between 2 and 6.")
+        print("Invalid input. Enter a number between 2 and 10.")
         textbox.set_val(str(process_limit))
 
 # Attach the function to the text box
