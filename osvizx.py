@@ -140,11 +140,13 @@ def plot_pie_chart(processes):
 
 def update(frame):
     """Update function called by FuncAnimation."""
-    top_processes = get_top_processes()
-    display_process_table(top_processes)
-    plot_bar_chart(top_processes)
-    plot_pie_chart(top_processes)
-
+    top_processes = get_top_processes()  # Get updated process list
+    if not top_processes:  # Safety check in case no processes are returned
+        return
+    
+    display_process_table(top_processes)  # Update process table
+    plot_bar_chart(top_processes)  # Update bar chart
+    plot_pie_chart(top_processes)  # Update pie chart
 # Start animation
 animation = FuncAnimation(fig, update, interval=1000)
 plt.show()
