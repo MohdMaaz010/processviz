@@ -1,3 +1,4 @@
+
 import subprocess
 import sys
 import psutil
@@ -5,6 +6,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import TextBox
+from datetime import datetime
+import numpy as np
 
 # Function to install required libraries if not found
 def install_package(package_name):
@@ -18,47 +21,51 @@ def install_package(package_name):
 for package in ['psutil', 'matplotlib']:
     install_package(package)
 
-# Initialize figure and axes
-fig = plt.figure(figsize=(14, 14))
-fig.suptitle('Real-Time Task Manager Simulation', fontsize=18, weight='bold')
+# Initialize figure with proper layout
+plt.rcParams['toolbar'] = 'None'  # Disable toolbar
+fig = plt.figure(figsize=(14, 12))
+fig.suptitle('Real-Time Task Manager Simulation', fontsize=16, weight='bold')
 
-# Define subplot positions
-table_ax = fig.add_axes([0.05, 0.7, 0.4, 0.2])  
-pie_ax = fig.add_axes([0.55, 0.7, 0.3, 0.25])  
-legend_ax = fig.add_axes([0.87, 0.7, 0.1, 0.25])  
-bar_ax = fig.add_axes([0.1, 0.2, 0.8, 0.4])    
+# Define subplot positions with perfect spacing
+gs = fig.add_gridspec(3, 2, height_ratios=[1.2, 0.1, 1], width_ratios=[1, 0.8], 
+                     hspace=0.4, wspace=0.3)
 
-# Adjusted textbox position
-textbox_ax = fig.add_axes([0.45, 0.88, 0.085, 0.03])
+# Top row: Process table and pie chart
+table_ax = fig.add_subplot(gs[0, 0])  # Process table (left)
+pie_ax = fig.add_subplot(gs[0, 1])    # Pie chart (right)
+
+# Middle row: Empty space for separation
+# Bottom row: CPU and memory graphs
+bar_ax = fig.add_subplot(gs[2, 0])    # CPU usage bar chart (left)
+mem_ax = fig.add_subplot(gs[2, 1])    # Memory trend graph (right)
+
+# Textbox for process limit
+textbox_ax = fig.add_axes([0.45, 0.90, 0.085, 0.03])
 textbox = TextBox(textbox_ax, "Processes:", initial="5")
 
-# Draw a manual rectangle around the textbox
+# Style the textbox
 border = patches.Rectangle(
     (0, 0), 1, 1, transform=textbox_ax.transAxes,
-    linewidth=2, edgecolor='black', facecolor='none'
+    linewidth=1, edgecolor='gray', facecolor='none'
 )
 textbox_ax.add_patch(border)
-
-# Remove axis ticks and labels around the text box
 textbox_ax.set_xticks([])
 textbox_ax.set_yticks([])
 textbox_ax.set_frame_on(False)
-# Default process limit
+
+# Color scheme and default process limit
+colors = ['#FF6B6B', '#4D96FF', '#6BCB77', '#FFA36C', '#C47AFF', 
+          '#FFD700', '#8A2BE2', '#FF4500', '#20B2AA', '#DC143C']
 process_limit = 5
-colors = ['#FF6B6B', '#4D96FF', '#6BCB77', '#FFA36C', '#C47AFF', '#FFD700', 
-          '#8A2BE2', '#FF4500', '#20B2AA', '#DC143C']
-
-# Default process limit
-# process_limit = 5  # You can change this to any number between 2 and 9
-
-# Adjusted textbox position
+memory_history = []
+MAX_HISTORY = 30
 
 def update_process_limit(text):
     """Update the process limit based on user input."""
     global process_limit
     try:
         value = int(text)
-        if 2 <= value <= 9:  # Max limit is now 9
+        if 2 <= value <= 9:
             process_limit = value
         else:
             print("Limit must be between 2 and 9. Resetting to default (5).")
@@ -66,7 +73,6 @@ def update_process_limit(text):
             process_limit = 5
     except ValueError:
         print("Invalid input. Enter a number between 2 and 9.")
-        # textbox.set_val(str(process_limit))
 
 textbox.on_submit(update_process_limit)
 
@@ -80,89 +86,117 @@ def get_top_processes():
     )[:process_limit]
 
 def display_process_table(processes):
-    """Display process table with dynamically positioned heading."""
+    """Display process table with proper spacing."""
     table_ax.clear()
     table_ax.axis('off')
 
-    # Prepare table data
-    cell_text = [[p.info['pid'], p.info['name'][:10], f"{p.info['cpu_percent']:.2f}", 
-                  f"{p.info['memory_percent']:.2f}"] for p in processes]
-
-    # Column headers
-    col_labels = ['PID', 'Name', 'CPU (%)', 'Mem (%)']
+    cell_text = [[p.info['pid'], p.info['name'][:12], 
+                f"{p.info['cpu_percent']:.1f}", 
+                f"{p.info['memory_percent']:.1f}"] for p in processes]
 
     table = table_ax.table(
         cellText=cell_text,
-        colLabels=col_labels,
+        colLabels=['PID', 'Name', 'CPU%', 'Mem%'],
         loc='center',
         cellLoc='center',
-        colColours=['#DDDDDD'] * 4  
+        colWidths=[0.15, 0.35, 0.2, 0.2]
     )
     table.auto_set_font_size(False)
-    table.set_fontsize(9)
-    table.scale(0.7, 1.2)
-
-    # Add "Top Processes" heading above the table
-    table_ax.text(0.5, 1.2, "Top Processes", fontsize=16, weight='bold', ha='center', transform=table_ax.transAxes)
-
-
+    table.set_fontsize(8)
+    table.scale(1, 1.5)
+    table_ax.set_title('Top Processes', fontsize=12, weight='bold', pad=10)
 
 def plot_bar_chart(processes):
-    """Render bar chart with dynamic Y-axis scaling."""
-    bar_ax.cla()
-    bar_ax.set_title('CPU Usage (Bar Chart)', fontsize=14, weight='bold')
-    bar_ax.text(0.5, 1.15, f"Total RAM Usage: {psutil.virtual_memory().percent:.2f}%", 
-                 ha='center', fontsize=12, color='red', transform=bar_ax.transAxes, weight='bold')
-    names = [f"{p.info['name']} (PID {p.info['pid']})" for p in processes]
+    """Render a bar chart with perfect spacing."""
+    bar_ax.clear()
+    names = [f"{p.info['name'][:10]}\n(PID:{p.info['pid']})" for p in processes]
     cpu_usages = [p.info['cpu_percent'] for p in processes]
-    bar_ax.set_ylim(0, max(cpu_usages, default=100) * 1.2)
-    bars = bar_ax.bar(names, cpu_usages, color=colors[:len(processes)], edgecolor='black')
-    bar_ax.set_ylabel('CPU Usage (%)', fontsize=12)
-    bar_ax.set_xticklabels(names, rotation=45, ha='right', fontsize=10)
+
+    bars = bar_ax.bar(names, cpu_usages, color=colors[:len(processes)], 
+                     edgecolor='black', width=0.6)
+    bar_ax.set_title('CPU Usage by Process', fontsize=12, weight='bold', pad=10)
+    bar_ax.set_ylabel('CPU Usage (%)', fontsize=10)
+    bar_ax.set_ylim(0, max(cpu_usages) + 10 if cpu_usages else 100)
+    bar_ax.tick_params(axis='x', labelsize=8, rotation=0)
+    bar_ax.tick_params(axis='y', labelsize=8)
+    bar_ax.grid(axis='y', linestyle='--', alpha=0.6)
+
     for bar, usage in zip(bars, cpu_usages):
-        bar_ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2, f"{usage:.1f}%", 
-                     ha='center', va='bottom', fontsize=9, weight='bold')
+        bar_ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1, 
+                   f"{usage:.1f}%", ha='center', va='bottom', 
+                   fontsize=8, weight='bold')
 
 def plot_pie_chart(processes):
-    """Render the pie chart with separate legend."""
+    """Render the pie chart with perfect spacing."""
     pie_ax.clear()
-    pie_ax.text(0, 1.1, 'CPU Usage Distribution', fontsize=14, weight='bold', ha='center')
-
-    names = [p.info['name'] for p in processes]
+    if not processes:
+        return
+        
+    names = [p.info['name'][:10] for p in processes]
     cpu_usages = [max(p.info['cpu_percent'], 0.1) for p in processes]
 
-    wedges, _ = pie_ax.pie(
+    wedges, texts = pie_ax.pie(
         cpu_usages,
         colors=colors[:len(processes)],
         startangle=90,
-        wedgeprops={'linewidth': 1, 'edgecolor': 'white'}
+        wedgeprops={'linewidth': 1, 'edgecolor': 'white'},
+        textprops={'fontsize': 0}  # Hide inner labels
     )
+    
+    # Add white circle in center
+    pie_ax.add_artist(plt.Circle((0, 0), 0.4, fc='white'))
+    pie_ax.set_title('CPU Distribution', fontsize=12, weight='bold', pad=10)
+    
+    # Create compact legend with perfect spacing
+    legend = pie_ax.legend(wedges, [f"{n}\n({u:.1f}%)" for n, u in zip(names, cpu_usages)],
+                         loc='center left', 
+                         fontsize=8, 
+                         bbox_to_anchor=(1.1, 0.5),
+                         frameon=False)
 
-    centre_circle = plt.Circle((0, 0), 0.65, fc='white')
-    pie_ax.add_artist(centre_circle)
-
-    # Update legend separately
-    legend_ax.clear()
-    legend_ax.axis('off')
-
-    legend_text = [[p.info['name'], f"{p.info['cpu_percent']:.1f}%"] for p in processes]
-    legend_table = legend_ax.table(
-        cellText=legend_text,
-        colLabels=['Process', 'CPU %'],
-        loc='center',
-        cellLoc='left',
-        colColours=['#DDDDDD', '#DDDDDD']
-    )
-    legend_table.auto_set_font_size(False)
-    legend_table.set_fontsize(9)
-    legend_table.scale(0.9, 1.2)
+def update_memory_trend():
+    """Update the memory usage trend graph with perfect spacing."""
+    mem_ax.clear()
+    mem = psutil.virtual_memory()
+    memory_history.append(mem.percent)
+    
+    if len(memory_history) > MAX_HISTORY:
+        memory_history.pop(0)
+    
+    mem_ax.plot(memory_history, color='#4D96FF', linewidth=1.5)
+    mem_ax.fill_between(range(len(memory_history)), memory_history, 
+                       color='#4D96FF', alpha=0.2)
+    mem_ax.set_title('Memory Usage Trend', fontsize=12, weight='bold', pad=10)
+    mem_ax.set_ylabel('Usage (%)', fontsize=10)
+    mem_ax.set_xlabel('Time (updates)', fontsize=8)
+    mem_ax.set_ylim(0, 100)
+    mem_ax.tick_params(axis='both', labelsize=8)
+    mem_ax.grid(True, linestyle='--', alpha=0.6)
+    
+    if memory_history:
+        mem_ax.text(len(memory_history)-1, memory_history[-1], 
+                   f"Current: {memory_history[-1]:.1f}%", 
+                   ha='right', va='bottom', fontsize=8, weight='bold')
 
 def update(frame):
     """Update function called by FuncAnimation."""
-    top_processes = get_top_processes()
-    display_process_table(top_processes)
-    plot_bar_chart(top_processes)
-    plot_pie_chart(top_processes)
+    try:
+        top_processes = get_top_processes()
+        display_process_table(top_processes)
+        plot_pie_chart(top_processes)
+        plot_bar_chart(top_processes)
+        update_memory_trend()
+        
+        fig.suptitle('Real-Time Task Manager Simulation', 
+                    fontsize=16, weight='bold', y=0.98)
+        
+    except Exception as e:
+        print(f"Error updating: {e}")
+
+# Configure to remove footer and toolbar
+plt.rcParams['figure.constrained_layout.use'] = True
+plt.rcParams['figure.constrained_layout.h_pad'] = 0.2
+plt.rcParams['figure.constrained_layout.w_pad'] = 0.2
 
 # Start animation
 animation = FuncAnimation(fig, update, interval=1000)
