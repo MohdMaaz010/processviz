@@ -108,27 +108,20 @@ def display_process_table(processes):
 
 
 def plot_bar_chart(processes):
-    """Render a bar chart with improved label visibility."""
-    bar_ax.clear()
+    """Render bar chart with dynamic Y-axis scaling."""
+    bar_ax.cla()
     bar_ax.set_title('CPU Usage (Bar Chart)', fontsize=14, weight='bold')
-
-    # Add RAM Usage text **above** the bar chart title
-    ram_usage = psutil.virtual_memory().percent  
-    bar_ax.text(0.5, 1.15, f"Total RAM Usage: {ram_usage:.2f}%", 
-                ha='center', fontsize=12, color='red', transform=bar_ax.transAxes, weight='bold')
-
+    bar_ax.text(0.5, 1.15, f"Total RAM Usage: {psutil.virtual_memory().percent:.2f}%", 
+                 ha='center', fontsize=12, color='red', transform=bar_ax.transAxes, weight='bold')
     names = [f"{p.info['name']} (PID {p.info['pid']})" for p in processes]
     cpu_usages = [p.info['cpu_percent'] for p in processes]
-
+    bar_ax.set_ylim(0, max(cpu_usages, default=100) * 1.2)
     bars = bar_ax.bar(names, cpu_usages, color=colors[:len(processes)], edgecolor='black')
     bar_ax.set_ylabel('CPU Usage (%)', fontsize=12)
-    bar_ax.set_ylim(0, max(cpu_usages) + 10)
-    bar_ax.set_xticks(range(len(names)))
     bar_ax.set_xticklabels(names, rotation=45, ha='right', fontsize=10)
-
     for bar, usage in zip(bars, cpu_usages):
         bar_ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 2, f"{usage:.1f}%", 
-                    ha='center', va='bottom', fontsize=9, weight='bold')
+                     ha='center', va='bottom', fontsize=9, weight='bold')
 
 def plot_pie_chart(processes):
     """Render the pie chart with separate legend."""
