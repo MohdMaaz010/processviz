@@ -227,6 +227,27 @@ def update_disk_activity():
     disk_ax.set_title('💾 Disk Activity', fontsize=12, weight='bold', color="#7597f6", pad=10)
     disk_ax.set_ylim(0, max(disk_read_history + disk_write_history) + 10 if disk_read_history else 10)
 
+
+
+def update_network_activity():
+    net_ax.clear()
+    net = psutil.net_io_counters()
+    net_sent_history.append(net.bytes_sent / (1024 * 1024))
+    net_recv_history.append(net.bytes_recv / (1024 * 1024))
+    if len(net_sent_history) > MAX_HISTORY:
+        net_sent_history.pop(0)
+        net_recv_history.pop(0)
+
+    net_ax.plot(net_sent_history, color='lime', linewidth=2, label='Upload MB/s')
+    net_ax.plot(net_recv_history, color='orange', linewidth=2, label='Download MB/s')
+    net_ax.legend()
+    net_ax.set_title('🌐 Network Activity', fontsize=12, weight='bold', color="#7597f6", pad=10)
+    net_ax.set_ylim(0, max(net_sent_history + net_recv_history) + 10 if net_sent_history else 10)
+
+
+
+
+
 def update(frame):
     """Update function called by FuncAnimation."""
     try:
