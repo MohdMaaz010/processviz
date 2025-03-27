@@ -192,28 +192,40 @@ def plot_pie_chart(processes):
 
 
 def update_memory_trend():
-    """Update the memory usage trend graph with perfect spacing."""
     mem_ax.clear()
     mem = psutil.virtual_memory()
     memory_history.append(mem.percent)
-    
     if len(memory_history) > MAX_HISTORY:
         memory_history.pop(0)
-    
-    mem_ax.plot(memory_history, color='#4D96FF', linewidth=1.5)
-    mem_ax.fill_between(range(len(memory_history)), memory_history, 
-                       color='#4D96FF', alpha=0.2)
-    mem_ax.set_title('Memory Usage Trend', fontsize=12, weight='bold', pad=10)
-    mem_ax.set_ylabel('Usage (%)', fontsize=10)
-    mem_ax.set_xlabel('Time (updates)', fontsize=8)
+
+    mem_ax.fill_between(range(len(memory_history)), memory_history, color='#4D96FF', alpha=0.4)
+    mem_ax.plot(memory_history, color='#4D96FF', linewidth=2)
+
+    # Add percentage label at the latest point
+    mem_ax.text(len(memory_history) - 1, memory_history[-1], f"{memory_history[-1]:.1f}%", 
+                ha='right', va='bottom', fontsize=10, color="white", weight="bold")
+
+    mem_ax.set_title('📈 Memory Usage Trend', fontsize=12, weight='bold', color="#7597f6", pad=10)
     mem_ax.set_ylim(0, 100)
-    mem_ax.tick_params(axis='both', labelsize=8)
-    mem_ax.grid(True, linestyle='--', alpha=0.6)
+
+
+
+
+#fuction for disk activity monitering
+def update_disk_activity():
+    disk_ax.clear()
+    disk = psutil.disk_io_counters()
+    disk_read_history.append(disk.read_bytes / (1024 * 1024))
+    disk_write_history.append(disk.write_bytes / (1024 * 1024))
+    if len(disk_read_history) > MAX_HISTORY:
+        disk_read_history.pop(0)
+        disk_write_history.pop(0)
     
-    if memory_history:
-        mem_ax.text(len(memory_history)-1, memory_history[-1], 
-                   f"Current: {memory_history[-1]:.1f}%", 
-                   ha='right', va='bottom', fontsize=8, weight='bold')
+    disk_ax.plot(disk_read_history, color='cyan', linewidth=2, label='Read MB/s')
+    disk_ax.plot(disk_write_history, color='magenta', linewidth=2, label='Write MB/s')
+    disk_ax.legend()
+    disk_ax.set_title('💾 Disk Activity', fontsize=12, weight='bold', color="#7597f6", pad=10)
+    disk_ax.set_ylim(0, max(disk_read_history + disk_write_history) + 10 if disk_read_history else 10)
 
 def update(frame):
     """Update function called by FuncAnimation."""
