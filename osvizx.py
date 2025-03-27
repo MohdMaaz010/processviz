@@ -247,27 +247,15 @@ def update_network_activity():
 
 
 
-
+# updated to run modified functions
 def update(frame):
-    """Update function called by FuncAnimation."""
-    try:
-        top_processes = get_top_processes()
-        display_process_table(top_processes)
-        plot_pie_chart(top_processes)
-        plot_bar_chart(top_processes)
-        update_memory_trend()
-        
-        fig.suptitle('Real-Time Task Manager Simulation', 
-                    fontsize=16, weight='bold', y=0.98)
-        
-    except Exception as e:
-        print(f"Error updating: {e}")
+    top_processes = get_top_processes()
+    plot_pie_chart(top_processes)
+    update_memory_trend()
+    update_disk_activity()
+    update_network_activity()
+    update_table()
+    update_bar_chart()
 
-# Configure to remove footer and toolbar
-plt.rcParams['figure.constrained_layout.use'] = True
-plt.rcParams['figure.constrained_layout.h_pad'] = 0.2
-plt.rcParams['figure.constrained_layout.w_pad'] = 0.2
-
-# Start animation
 animation = FuncAnimation(fig, update, interval=1000)
 plt.show()
