@@ -144,53 +144,52 @@ def update_table():
 
 
 
-def plot_bar_chart(processes):
-    """Render a bar chart with perfect spacing."""
+def update_bar_chart():
     bar_ax.clear()
-    names = [f"{p.info['name'][:10]}\n(PID:{p.info['pid']})" for p in processes]
-    cpu_usages = [p.info['cpu_percent'] for p in processes]
+    processes = get_top_processes()
 
-    bars = bar_ax.bar(names, cpu_usages, color=colors[:len(processes)], 
-                     edgecolor='black', width=0.6)
-    bar_ax.set_title('CPU Usage by Process', fontsize=12, weight='bold', pad=10)
-    bar_ax.set_ylabel('CPU Usage (%)', fontsize=10)
-    bar_ax.set_ylim(0, max(cpu_usages) + 10 if cpu_usages else 100)
-    bar_ax.tick_params(axis='x', labelsize=8, rotation=0)
-    bar_ax.tick_params(axis='y', labelsize=8)
-    bar_ax.grid(axis='y', linestyle='--', alpha=0.6)
+    if not processes:
+        bar_ax.text(0.5, 0.5, "No Data", fontsize=12, ha="center", color="white")
+        return
 
-    for bar, usage in zip(bars, cpu_usages):
-        bar_ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1, 
-                   f"{usage:.1f}%", ha='center', va='bottom', 
-                   fontsize=8, weight='bold')
+    names = [p.info['name'][:10] for p in processes]  # Process names
+    cpu_usage = [p.info['cpu_percent'] for p in processes]  # CPU usage percentages
+
+    bars = bar_ax.bar(names, cpu_usage, color=sns.color_palette("coolwarm", len(processes)))
+
+    # Add percentage labels on top of each bar
+    for bar, usage in zip(bars, cpu_usage):
+        bar_ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 1, f"{usage:.1f}%", 
+                    ha='center', va='bottom', fontsize=10, color="white")
+
+    bar_ax.set_title("🔥 Top CPU Processes", fontsize=12, weight="bold", color="#7597f6", pad=10)
+    bar_ax.set_ylabel("CPU Usage (%)", color="white")
+    
+    # Ensure names are straight (no rotation)
+    bar_ax.tick_params(axis="x", colors="white", rotation=0)  
+    bar_ax.tick_params(axis="y", colors="white")
+
+
+
+
 
 def plot_pie_chart(processes):
-    """Render the pie chart with perfect spacing."""
     pie_ax.clear()
     if not processes:
         return
-        
+
     names = [p.info['name'][:10] for p in processes]
     cpu_usages = [max(p.info['cpu_percent'], 0.1) for p in processes]
 
-    wedges, texts = pie_ax.pie(
-        cpu_usages,
-        colors=colors[:len(processes)],
-        startangle=90,
-        wedgeprops={'linewidth': 1, 'edgecolor': 'white'},
-        textprops={'fontsize': 0}  # Hide inner labels
-    )
+    wedges, _ = pie_ax.pie(cpu_usages, colors=colors[:len(processes)], startangle=90,
+                            wedgeprops={'linewidth': 1, 'edgecolor': 'white'})
+    pie_ax.set_title('🧩 CPU Distribution', fontsize=12, weight='bold', color="#7597f6", pad=10)
     
-    # Add white circle in center
-    pie_ax.add_artist(plt.Circle((0, 0), 0.4, fc='white'))
-    pie_ax.set_title('CPU Distribution', fontsize=12, weight='bold', pad=10)
-    
-    # Create compact legend with perfect spacing
-    legend = pie_ax.legend(wedges, [f"{n}\n({u:.1f}%)" for n, u in zip(names, cpu_usages)],
-                         loc='center left', 
-                         fontsize=8, 
-                         bbox_to_anchor=(1.1, 0.5),
-                         frameon=False)
+    # Add text list beside pie chart
+    pie_ax.legend(names, loc="center left", bbox_to_anchor=(1, 0.5))
+
+
+
 
 def update_memory_trend():
     """Update the memory usage trend graph with perfect spacing."""
