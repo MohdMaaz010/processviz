@@ -64,19 +64,17 @@ net_sent_history, net_recv_history = [], []
 MAX_HISTORY = 30
 colors = sns.color_palette("coolwarm", 10)
 
+
+
+# updated top process table for better visiblity
 def update_process_limit(text):
-    """Update the process limit based on user input."""
     global process_limit
     try:
         value = int(text)
-        if 2 <= value <= 9:
-            process_limit = value
-        else:
-            print("Limit must be between 2 and 9. Resetting to default (5).")
-            textbox.set_val("5")
-            process_limit = 5
+        process_limit = max(2, min(value, 9))
     except ValueError:
-        print("Invalid input. Enter a number between 2 and 9.")
+        textbox.set_val("5")
+        process_limit = 5
 
 textbox.on_submit(update_process_limit)
 
