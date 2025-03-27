@@ -1,64 +1,68 @@
-
 import subprocess
 import sys
 import psutil
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.animation import FuncAnimation
-from matplotlib.widgets import TextBox
-from datetime import datetime
+import seaborn as sns
 import numpy as np
+from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import TextBox, Button
 
 # Function to install required libraries if not found
 def install_package(package_name):
     try:
         __import__(package_name)
     except ImportError:
-        print(f"{package_name} not found. Installing...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
 
-# Install necessary libraries
-for package in ['psutil', 'matplotlib']:
+for package in ['psutil', 'matplotlib', 'seaborn']:
     install_package(package)
 
-# Initialize figure with proper layout
-plt.rcParams['toolbar'] = 'None'  # Disable toolbar
-fig = plt.figure(figsize=(14, 12))
-fig.suptitle('Real-Time Task Manager Simulation', fontsize=16, weight='bold')
+sns.set_style("darkgrid")
+plt.rcParams.update({
+    "axes.facecolor": "#1E1E1E",
+    "axes.edgecolor": "#444",
+    "text.color": "#EEEEEE",
+    "axes.labelcolor": "#EEEEEE",
+    "xtick.color": "#EEEEEE",
+    "ytick.color": "#EEEEEE",
+    "grid.color": "#444",
+    "figure.facecolor": "#1E1E1E"
+})
+fig, axes = plt.subplots(3, 2, figsize=(12, 10), gridspec_kw={'height_ratios': [0.6, 1, 1], 'wspace': 0.3, 'hspace': 0.6})
+table_ax, pie_ax, bar_ax, mem_ax, disk_ax, net_ax = axes.flatten()
 
-# Define subplot positions with perfect spacing
-gs = fig.add_gridspec(3, 2, height_ratios=[1.2, 0.1, 1], width_ratios=[1, 0.8], 
-                     hspace=0.4, wspace=0.3)
+# Move everything slightly down by reducing the Y-coordinates
+table_ax.set_position([0.05, 0.70, 0.50, 0.15])  
+pie_ax.set_position([0.50, 0.59, 0.5, 0.30])  
 
-# Top row: Process table and pie chart
-table_ax = fig.add_subplot(gs[0, 0])  # Process table (left)
-pie_ax = fig.add_subplot(gs[0, 1])    # Pie chart (right)
+bar_ax.set_position([0.05, 0.30, 0.45, 0.30])  
+mem_ax.set_position([0.6, 0.29, 0.37, 0.22])  
 
-# Middle row: Empty space for separation
-# Bottom row: CPU and memory graphs
-bar_ax = fig.add_subplot(gs[2, 0])    # CPU usage bar chart (left)
-mem_ax = fig.add_subplot(gs[2, 1])    # Memory trend graph (right)
+disk_ax.set_position([0.07, 0.05, 0.24, 0.13])  
+net_ax.set_position([0.70, 0.05, 0.24, 0.13])  
 
-# Textbox for process limit
-textbox_ax = fig.add_axes([0.45, 0.90, 0.085, 0.03])
-textbox = TextBox(textbox_ax, "Processes:", initial="5")
+fig.suptitle('⚡ Real-Time Task Manager', fontsize=17,fontname="Segoe UI", weight='bold', color="#b5cdfa", y=0.94)
 
-# Style the textbox
-border = patches.Rectangle(
-    (0, 0), 1, 1, transform=textbox_ax.transAxes,
-    linewidth=1, edgecolor='gray', facecolor='none'
-)
-textbox_ax.add_patch(border)
-textbox_ax.set_xticks([])
-textbox_ax.set_yticks([])
-textbox_ax.set_frame_on(False)
+ 
 
-# Color scheme and default process limit
-colors = ['#FF6B6B', '#4D96FF', '#6BCB77', '#FFA36C', '#C47AFF', 
-          '#FFD700', '#8A2BE2', '#FF4500', '#20B2AA', '#DC143C']
+
+# Textbox & Button for process limit and termination
+textbox_ax = fig.add_axes([0.47, 0.15, 0.085, 0.03])
+textbox = TextBox(textbox_ax, "Processes:", initial="5", color="black", hovercolor="#555")
+
+kill_textbox_ax = fig.add_axes([0.42, 0.08, 0.085, 0.03])
+kill_textbox = TextBox(kill_textbox_ax, "Kill PID:", initial="", color="black", hovercolor="#555")
+
+kill_button_ax = fig.add_axes([0.52, 0.08, 0.08, 0.03])
+kill_button = Button(kill_button_ax, "Kill", color="red", hovercolor="darkred")
+
 process_limit = 5
 memory_history = []
+disk_read_history, disk_write_history = [], []
+net_sent_history, net_recv_history = [], []
+
 MAX_HISTORY = 30
+colors = sns.color_palette("coolwarm", 10)
 
 def update_process_limit(text):
     """Update the process limit based on user input."""
