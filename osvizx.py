@@ -7,6 +7,8 @@ import numpy as np
 from matplotlib.animation import FuncAnimation
 from matplotlib.widgets import TextBox, Button
 
+
+
 # Function to install required libraries if not found
 def install_package(package_name):
     try:
@@ -16,6 +18,9 @@ def install_package(package_name):
 
 for package in ['psutil', 'matplotlib', 'seaborn']:
     install_package(package)
+
+
+
 
 sns.set_style("darkgrid")
 plt.rcParams.update({
@@ -28,6 +33,10 @@ plt.rcParams.update({
     "grid.color": "#444",
     "figure.facecolor": "#1E1E1E"
 })
+
+
+
+
 fig, axes = plt.subplots(3, 2, figsize=(12, 10), gridspec_kw={'height_ratios': [0.6, 1, 1], 'wspace': 0.3, 'hspace': 0.6})
 table_ax, pie_ax, bar_ax, mem_ax, disk_ax, net_ax = axes.flatten()
 
@@ -78,35 +87,62 @@ def update_process_limit(text):
 
 textbox.on_submit(update_process_limit)
 
+
+# fuction to kill a process
+def kill_process(event):
+    pid_text = kill_textbox.text.strip()
+    try:
+        pid = int(pid_text)
+        p = psutil.Process(pid)
+        p.terminate()
+        print(f"Process {pid} terminated successfully.")
+    except (psutil.NoSuchProcess, ValueError):
+        print(f"Invalid PID: {pid_text}")
+
+kill_button.on_clicked(kill_process)
+
+
+
+
 def get_top_processes():
-    """Fetch top processes sorted by CPU usage."""
-    psutil.cpu_percent(interval=0.1)  # Ensure updated CPU values
+    psutil.cpu_percent(interval=0.1)
     return sorted(
-        psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent']),
+        [p for p in psutil.process_iter(attrs=['pid', 'name', 'cpu_percent', 'memory_percent'])
+         if p.info['cpu_percent'] is not None],
         key=lambda p: p.info['cpu_percent'],
         reverse=True
     )[:process_limit]
 
-def display_process_table(processes):
-    """Display process table with proper spacing."""
+
+
+# fuction for realtime table updation
+def update_table():
     table_ax.clear()
-    table_ax.axis('off')
+    processes = get_top_processes()
 
-    cell_text = [[p.info['pid'], p.info['name'][:12], 
-                f"{p.info['cpu_percent']:.1f}", 
-                f"{p.info['memory_percent']:.1f}"] for p in processes]
+    if not processes:
+        table_ax.text(0.5, 0.5, "No Processes", fontsize=12, ha="center", color="black")
+        return
 
-    table = table_ax.table(
-        cellText=cell_text,
-        colLabels=['PID', 'Name', 'CPU%', 'Mem%'],
-        loc='center',
-        cellLoc='center',
-        colWidths=[0.15, 0.35, 0.2, 0.2]
-    )
-    table.auto_set_font_size(False)
-    table.set_fontsize(8)
-    table.scale(1, 1.5)
-    table_ax.set_title('Top Processes', fontsize=12, weight='bold', pad=10)
+    data = [[p.info['pid'], p.info['name'], f"{p.info['cpu_percent']}%", f"{p.info['memory_percent']}%"] for p in processes]
+    table_ax.axis("off")
+
+    # Use the first color from the pie chart palette for the background
+    light_blue = "#d1dae9"  # Lightest shade from `colors = sns.color_palette("coolwarm", 10)`
+
+    table = table_ax.table(cellText=data, colLabels=["PID", "Name", "CPU%", "Mem%"], 
+                           cellLoc="center", loc="center", colColours=["#333333"]*4)
+
+    for (row, col), cell in table.get_celld().items():
+        if row == 0:  # Header row
+            cell.set_text_props(color="white")  # White text
+            cell.set_facecolor("#333333")  # Grey background
+        else:  # Data cells
+            cell.set_text_props(color="black")  # Black text
+            cell.set_facecolor(light_blue)  # Lightest blue background
+
+
+
 
 def plot_bar_chart(processes):
     """Render a bar chart with perfect spacing."""
