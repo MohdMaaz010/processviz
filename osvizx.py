@@ -3,11 +3,10 @@ import subprocess
 import sys
 import psutil
 import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-from matplotlib.animation import FuncAnimation
-from matplotlib.widgets import TextBox
-from datetime import datetime
+import seaborn as sns
 import numpy as np
+from matplotlib.animation import FuncAnimation
+from matplotlib.widgets import TextBox, Button
 
 # Function to install required libraries if not found
 def install_package(package_name):
@@ -18,13 +17,21 @@ def install_package(package_name):
         subprocess.check_call([sys.executable, "-m", "pip", "install", package_name])
 
 # Install necessary libraries
-for package in ['psutil', 'matplotlib']:
+for package in ['psutil', 'matplotlib', 'seaborn']: #added seaborn
     install_package(package)
 
-# Initialize figure with proper layout
-plt.rcParams['toolbar'] = 'None'  # Disable toolbar
-fig = plt.figure(figsize=(14, 12))
-fig.suptitle('Real-Time Task Manager Simulation', fontsize=16, weight='bold')
+# setting the style grid
+sns.set_style("darkgrid")
+plt.rcParams.update({
+    "axes.facecolor": "#1E1E1E",
+    "axes.edgecolor": "#444",
+    "text.color": "#EEEEEE",
+    "axes.labelcolor": "#EEEEEE",
+    "xtick.color": "#EEEEEE",
+    "ytick.color": "#EEEEEE",
+    "grid.color": "#444",
+    "figure.facecolor": "#1E1E1E"
+})
 
 # Define subplot positions with perfect spacing
 gs = fig.add_gridspec(3, 2, height_ratios=[1.2, 0.1, 1], width_ratios=[1, 0.8], 
